@@ -1,0 +1,1540 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Storj Cluster Dashboard</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%232683ff'><path d='M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5'/></svg>">
+  <style>
+    :root {
+      --bg-base: #0a0d14;
+      --bg-surface: #111827;
+      --bg-surface-elevated: #1a2234;
+      --bg-surface-hover: #222d44;
+      --border: #1f293d;
+      --border-subtle: #2d3748;
+      --text-primary: #f3f4f6;
+      --text-secondary: #9ca3af;
+      --text-muted: #6b7280;
+      
+      --storj-blue: #2683ff;
+      --storj-blue-dark: #0055d4;
+      --storj-cyan: #00d2ff;
+      --storj-glow: rgba(38, 131, 255, 0.15);
+      
+      --accent-green: #10b981;
+      --accent-green-bg: rgba(16, 185, 129, 0.12);
+      --accent-yellow: #f59e0b;
+      --accent-yellow-bg: rgba(245, 158, 11, 0.12);
+      --accent-red: #ef4444;
+      --accent-red-bg: rgba(239, 68, 68, 0.12);
+      --accent-purple: #8b5cf6;
+      
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 14px;
+      --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.2);
+      --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.3);
+      --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.4);
+      --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: var(--bg-base);
+      color: var(--text-primary);
+      line-height: 1.5;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: var(--bg-base);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: var(--border-subtle);
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #4b5563;
+    }
+
+    /* Header */
+    header {
+      background: var(--bg-surface);
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      backdrop-filter: blur(8px);
+    }
+
+    .header-container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 0.85rem 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      text-decoration: none;
+      color: var(--text-primary);
+    }
+
+    .brand-logo {
+      width: 34px;
+      height: 34px;
+      border-radius: var(--radius-sm);
+      background: linear-gradient(135deg, var(--storj-blue), var(--storj-cyan));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 15px var(--storj-glow);
+    }
+
+    .brand-logo svg {
+      width: 20px;
+      height: 20px;
+      fill: #ffffff;
+    }
+
+    .brand-text h1 {
+      font-size: 1.15rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .brand-text span.badge {
+      font-size: 0.65rem;
+      padding: 0.15rem 0.5rem;
+      border-radius: 9999px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .header-controls {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      padding: 0.35rem 0.75rem;
+      border-radius: 9999px;
+      font-size: 0.8rem;
+      font-weight: 500;
+      background: var(--bg-surface-elevated);
+      border: 1px solid var(--border);
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--text-muted);
+    }
+    .status-dot.healthy {
+      background: var(--accent-green);
+      box-shadow: 0 0 8px var(--accent-green);
+      animation: pulse-dot 2s infinite;
+    }
+    .status-dot.warning {
+      background: var(--accent-yellow);
+      box-shadow: 0 0 8px var(--accent-yellow);
+    }
+    .status-dot.danger {
+      background: var(--accent-red);
+      box-shadow: 0 0 8px var(--accent-red);
+    }
+
+    @keyframes pulse-dot {
+      0% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.6; transform: scale(1.15); }
+      100% { opacity: 1; transform: scale(1); }
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      padding: 0.45rem 0.85rem;
+      font-size: 0.825rem;
+      font-weight: 600;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+      background: var(--bg-surface-elevated);
+      color: var(--text-primary);
+      cursor: pointer;
+      transition: var(--transition);
+      text-decoration: none;
+    }
+
+    .btn:hover {
+      background: var(--bg-surface-hover);
+      border-color: var(--border-subtle);
+    }
+
+    .btn:active {
+      transform: translateY(1px);
+    }
+
+    .btn-primary {
+      background: var(--storj-blue);
+      border-color: var(--storj-blue);
+      color: #ffffff;
+    }
+
+    .btn-primary:hover {
+      background: var(--storj-blue-dark);
+      border-color: var(--storj-blue-dark);
+    }
+
+    .select-dropdown {
+      background: var(--bg-surface-elevated);
+      color: var(--text-primary);
+      border: 1px solid var(--border);
+      padding: 0.45rem 0.75rem;
+      border-radius: var(--radius-sm);
+      font-size: 0.825rem;
+      outline: none;
+      cursor: pointer;
+    }
+
+    .select-dropdown:hover, .select-dropdown:focus {
+      border-color: var(--storj-blue);
+    }
+
+    .refresh-indicator {
+      display: inline-flex;
+      align-items: center;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      gap: 0.35rem;
+    }
+
+    .spinning {
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    /* Main Container */
+    main {
+      flex: 1;
+      max-width: 1400px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    /* Section Titles */
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 0.85rem;
+    }
+
+    .section-title {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .section-title svg {
+      width: 18px;
+      height: 18px;
+      color: var(--storj-blue);
+    }
+
+    /* KPI Grid */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1rem;
+    }
+
+    .kpi-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 1.25rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+      overflow: hidden;
+      box-shadow: var(--shadow-sm);
+      transition: var(--transition);
+    }
+
+    .kpi-card:hover {
+      border-color: var(--border-subtle);
+      box-shadow: var(--shadow-md);
+      transform: translateY(-2px);
+    }
+
+    .kpi-card-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 0.75rem;
+    }
+
+    .kpi-label {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .kpi-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .icon-blue { background: rgba(38, 131, 255, 0.15); color: var(--storj-blue); }
+    .icon-green { background: rgba(16, 185, 129, 0.15); color: var(--accent-green); }
+    .icon-purple { background: rgba(139, 92, 246, 0.15); color: var(--accent-purple); }
+    .icon-amber { background: rgba(245, 158, 11, 0.15); color: var(--accent-yellow); }
+
+    .kpi-main-val {
+      font-size: 1.85rem;
+      font-weight: 800;
+      color: #ffffff;
+      line-height: 1.2;
+      display: flex;
+      align-items: baseline;
+      gap: 0.4rem;
+    }
+
+    .kpi-sub-val {
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: var(--text-secondary);
+    }
+
+    .kpi-footer {
+      margin-top: 1rem;
+      padding-top: 0.75rem;
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    /* Storage Progress Bar */
+    .storage-bar-wrapper {
+      margin-top: 0.75rem;
+    }
+
+    .progress-bar-bg {
+      width: 100%;
+      height: 8px;
+      background: var(--bg-surface-elevated);
+      border-radius: 9999px;
+      overflow: hidden;
+      display: flex;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      transition: width 0.4s ease;
+    }
+
+    .fill-used {
+      background: linear-gradient(90deg, var(--storj-blue), var(--storj-cyan));
+    }
+    .fill-warning {
+      background: linear-gradient(90deg, var(--accent-yellow), #f97316);
+    }
+    .fill-danger {
+      background: linear-gradient(90deg, #ef4444, #dc2626);
+    }
+    .fill-trash {
+      background: #6b7280;
+    }
+
+    /* Node Cards Grid */
+    .nodes-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+      gap: 1.25rem;
+    }
+
+    .node-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 1.35rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.15rem;
+      box-shadow: var(--shadow-sm);
+      transition: var(--transition);
+      position: relative;
+      min-width: 0;
+      overflow: hidden;
+    }
+
+    .node-card:hover {
+      border-color: var(--border-subtle);
+      box-shadow: var(--shadow-md);
+    }
+
+    .node-card.offline {
+      opacity: 0.75;
+      border-color: rgba(239, 68, 68, 0.4);
+    }
+
+    .node-header {
+      display: flex;
+      flex-direction: column;
+      gap: 0.45rem;
+      width: 100%;
+      min-width: 0;
+    }
+
+    .node-header-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      width: 100%;
+      min-width: 0;
+    }
+
+    .node-name {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .node-subtext {
+      font-size: 0.78rem;
+      color: var(--text-secondary);
+      font-family: monospace;
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.35rem 0.5rem;
+      width: 100%;
+      min-width: 0;
+      word-break: break-all;
+    }
+
+    .copy-btn {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      padding: 2px 4px;
+      border-radius: 4px;
+      transition: var(--transition);
+    }
+    .copy-btn:hover {
+      color: var(--storj-blue);
+      background: var(--bg-surface-elevated);
+    }
+
+    .node-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      flex-shrink: 0;
+      white-space: nowrap;
+    }
+
+    /* Metric stats row in node card */
+    .node-metrics-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.85rem;
+      background: var(--bg-surface-elevated);
+      padding: 0.85rem;
+      border-radius: var(--radius-md);
+      border: 1px solid rgba(255, 255, 255, 0.04);
+    }
+
+    .node-metric-item {
+      display: flex;
+      flex-direction: column;
+      gap: 0.15rem;
+    }
+
+    .node-metric-label {
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+
+    .node-metric-value {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .node-metric-sub {
+      font-size: 0.72rem;
+      color: var(--text-secondary);
+    }
+
+    /* Storage detail inside node */
+    .node-storage-section {
+      display: flex;
+      flex-direction: column;
+      gap: 0.45rem;
+    }
+
+    .node-storage-labels {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+    }
+
+    .node-badges-row {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      margin-top: 0.25rem;
+    }
+
+    .pill-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      font-size: 0.72rem;
+      font-weight: 600;
+      padding: 0.2rem 0.55rem;
+      border-radius: 9999px;
+      background: var(--bg-surface-elevated);
+      border: 1px solid var(--border);
+      color: var(--text-secondary);
+    }
+    .pill-badge.green {
+      background: var(--accent-green-bg);
+      border-color: rgba(16, 185, 129, 0.3);
+      color: #34d399;
+    }
+    .pill-badge.amber {
+      background: var(--accent-yellow-bg);
+      border-color: rgba(245, 158, 11, 0.3);
+      color: #fbbf24;
+    }
+    .pill-badge.red {
+      background: var(--accent-red-bg);
+      border-color: rgba(239, 68, 68, 0.3);
+      color: #f87171;
+    }
+
+    /* Satellites Table */
+    .table-container {
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      overflow-x: auto;
+      box-shadow: var(--shadow-sm);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+      text-align: left;
+    }
+
+    th {
+      background: var(--bg-surface-elevated);
+      color: var(--text-secondary);
+      font-weight: 600;
+      text-transform: uppercase;
+      font-size: 0.72rem;
+      letter-spacing: 0.05em;
+      padding: 0.85rem 1.25rem;
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+
+    td {
+      padding: 0.9rem 1.25rem;
+      border-bottom: 1px solid var(--border);
+      color: var(--text-primary);
+      white-space: nowrap;
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    tr:hover td {
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .satellite-name {
+      font-weight: 600;
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .score-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+      font-weight: 700;
+      font-size: 0.78rem;
+      font-family: monospace;
+    }
+    .score-perfect {
+      background: rgba(16, 185, 129, 0.15);
+      color: #34d399;
+    }
+    .score-good {
+      background: rgba(245, 158, 11, 0.15);
+      color: #fbbf24;
+    }
+    .score-bad {
+      background: rgba(239, 68, 68, 0.15);
+      color: #f87171;
+    }
+
+    /* Modal */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(4px);
+      z-index: 100;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+
+    .modal-backdrop.active {
+      display: flex;
+    }
+
+    .modal-content {
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      max-width: 650px;
+      width: 100%;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: var(--shadow-lg);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .modal-header {
+      padding: 1.25rem 1.5rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .modal-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+    }
+
+    .modal-body {
+      padding: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+
+    .node-row-item {
+      display: grid;
+      grid-template-columns: 2fr 2fr 1fr auto;
+      gap: 0.5rem;
+      align-items: center;
+    }
+
+    .input-field {
+      background: var(--bg-surface-elevated);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text-primary);
+      padding: 0.5rem 0.75rem;
+      font-size: 0.85rem;
+      outline: none;
+      width: 100%;
+    }
+
+    .input-field:focus {
+      border-color: var(--storj-blue);
+    }
+
+    .modal-footer {
+      padding: 1rem 1.5rem;
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: flex-end;
+      gap: 0.75rem;
+      background: var(--bg-surface-elevated);
+    }
+
+    /* Toast Notification */
+    .toast {
+      position: fixed;
+      bottom: 1.5rem;
+      right: 1.5rem;
+      padding: 0.75rem 1.25rem;
+      border-radius: var(--radius-md);
+      background: var(--bg-surface-elevated);
+      border: 1px solid var(--border);
+      color: var(--text-primary);
+      box-shadow: var(--shadow-lg);
+      font-size: 0.85rem;
+      z-index: 200;
+      transform: translateY(100px);
+      opacity: 0;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .toast.show {
+      transform: translateY(0);
+      opacity: 1;
+    }
+
+    /* Footer */
+    footer {
+      margin-top: auto;
+      padding: 1.25rem;
+      text-align: center;
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      border-top: 1px solid var(--border);
+    }
+
+    footer a {
+      color: var(--storj-blue);
+      text-decoration: none;
+    }
+
+    @media (max-width: 768px) {
+      .header-container {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      .header-controls {
+        justify-content: space-between;
+      }
+      .nodes-grid {
+        grid-template-columns: 1fr;
+      }
+      .node-row-item {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Bar -->
+  <header>
+    <div class="header-container">
+      <div class="brand">
+        <div class="brand-logo">
+          <svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+        </div>
+        <div class="brand-text">
+          <h1>
+            Storj Cluster Overview
+            <span id="clusterBadge" class="badge" style="background: rgba(38, 131, 255, 0.2); color: #60a5fa;">3 Nodes</span>
+          </h1>
+        </div>
+      </div>
+
+      <div class="header-controls">
+        <div class="status-pill" id="clusterStatusPill">
+          <div class="status-dot healthy" id="clusterStatusDot"></div>
+          <span id="clusterStatusText">Checking status...</span>
+        </div>
+
+        <div class="refresh-indicator">
+          <svg id="refreshTimerIcon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <polyline points="12 6 12 12 16 14"></polyline>
+          </svg>
+          <span id="countdownText">30s</span>
+        </div>
+
+        <select id="pollIntervalSelect" class="select-dropdown" aria-label="Auto Refresh Interval">
+          <option value="10">Auto: 10s</option>
+          <option value="30" selected>Auto: 30s</option>
+          <option value="60">Auto: 1 min</option>
+          <option value="300">Auto: 5 min</option>
+          <option value="0">Paused</option>
+        </select>
+
+        <button id="refreshBtn" class="btn" title="Force Refresh Now">
+          <svg id="refreshIcon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M23 4v6h-6M1 20v-6h6"></path>
+            <path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"></path>
+          </svg>
+          <span>Refresh</span>
+        </button>
+
+        <button id="settingsBtn" class="btn" title="Manage Monitored Nodes">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="3"></circle>
+            <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"></path>
+          </svg>
+          <span>Nodes</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Body -->
+  <main>
+    <!-- Cluster Summary KPIs -->
+    <section>
+      <div class="section-header">
+        <h2 class="section-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"></path></svg>
+          Cluster Aggregate Performance
+        </h2>
+        <span id="lastUpdatedLabel" style="font-size: 0.78rem; color: var(--text-muted);">Fetching metrics...</span>
+      </div>
+
+      <div class="kpi-grid">
+        <!-- 1. Total Storage -->
+        <div class="kpi-card">
+          <div class="kpi-card-top">
+            <span class="kpi-label">Storage Capacity</span>
+            <div class="kpi-icon icon-blue">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"></ellipse><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"></path><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path></svg>
+            </div>
+          </div>
+          <div>
+            <div class="kpi-main-val">
+              <span id="clusterUsedStorage">--</span>
+              <span class="kpi-sub-val" id="clusterTotalStorage">/ --</span>
+            </div>
+            <div class="storage-bar-wrapper">
+              <div class="progress-bar-bg">
+                <div id="clusterStorageBar" class="progress-bar-fill fill-used" style="width: 0%;"></div>
+              </div>
+            </div>
+          </div>
+          <div class="kpi-footer">
+            <span>Free: <strong id="clusterFreeStorage" style="color: var(--text-primary);">--</strong></span>
+            <span>Trash: <strong id="clusterTrashStorage" style="color: var(--text-secondary);">--</strong></span>
+            <span id="clusterStoragePercent" style="font-weight: 700; color: var(--storj-blue);">0%</span>
+          </div>
+        </div>
+
+        <!-- 2. Current Month Payout -->
+        <div class="kpi-card">
+          <div class="kpi-card-top">
+            <span class="kpi-label">Month-to-Date Net Payout</span>
+            <div class="kpi-icon icon-green">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"></path></svg>
+            </div>
+          </div>
+          <div>
+            <div class="kpi-main-val">
+              <span id="clusterCurrentPayout">$--</span>
+            </div>
+            <div style="font-size: 0.85rem; color: var(--accent-green); margin-top: 0.35rem; font-weight: 600;">
+              Projected: <span id="clusterExpectedPayout">$--</span>
+            </div>
+          </div>
+          <div class="kpi-footer">
+            <span>Gross: <strong id="clusterCurrentEarned" style="color: var(--text-primary);">$0.00</strong></span>
+            <span>Held: <strong id="clusterCurrentHeld" style="color: var(--text-secondary);">$0.00</strong></span>
+            <span>Prev: <strong id="clusterPrevPayout" style="color: var(--text-primary);">$0.00</strong></span>
+          </div>
+        </div>
+
+        <!-- 3. Network Bandwidth -->
+        <div class="kpi-card">
+          <div class="kpi-card-top">
+            <span class="kpi-label">Bandwidth Transferred</span>
+            <div class="kpi-icon icon-purple">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+            </div>
+          </div>
+          <div>
+            <div class="kpi-main-val">
+              <span id="clusterBandwidth">--</span>
+            </div>
+            <div style="font-size: 0.82rem; color: var(--text-secondary); margin-top: 0.35rem;">
+              Egress + Repair + Audit
+            </div>
+          </div>
+          <div class="kpi-footer">
+            <span>Active Protocols: <strong style="color: var(--text-primary);">QUIC + TCP</strong></span>
+            <span>QUIC: <strong id="clusterQuicStatus" style="color: var(--accent-green);">OK</strong></span>
+          </div>
+        </div>
+
+        <!-- 4. Cluster Health -->
+        <div class="kpi-card">
+          <div class="kpi-card-top">
+            <span class="kpi-label">Node Health & Versions</span>
+            <div class="kpi-icon icon-amber">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect><rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect><line x1="6" y1="6" x2="6.01" y2="6"></line><line x1="6" y1="18" x2="6.01" y2="18"></line></svg>
+            </div>
+          </div>
+          <div>
+            <div class="kpi-main-val">
+              <span id="clusterNodesOnline">-- / --</span>
+              <span class="kpi-sub-val">Online</span>
+            </div>
+            <div style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 0.35rem;">
+              Version: <span id="clusterVersions" style="color: #ffffff; font-weight: 600;">--</span>
+            </div>
+          </div>
+          <div class="kpi-footer">
+            <span>Audits Status: <strong style="color: var(--accent-green);">100% Avg</strong></span>
+            <span>Scheduler: <strong style="color: var(--text-primary);">Active</strong></span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Individual Storage Nodes -->
+    <section>
+      <div class="section-header">
+        <h2 class="section-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
+          Individual Storage Nodes
+        </h2>
+        <span style="font-size: 0.8rem; color: var(--text-muted);">Direct links to native web dashboards</span>
+      </div>
+
+      <div class="nodes-grid" id="nodesContainer">
+        <!-- Rendered dynamically -->
+        <div style="grid-column: 1 / -1; text-align: center; padding: 3rem; color: var(--text-muted);">
+          Loading node cards...
+        </div>
+      </div>
+    </section>
+
+    <!-- Satellites Audit & Reputation Matrix -->
+    <section>
+      <div class="section-header">
+        <h2 class="section-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"></path></svg>
+          Satellite Scores Matrix
+        </h2>
+        <span style="font-size: 0.8rem; color: var(--text-muted);">Audit, Suspension & Online rates per node</span>
+      </div>
+
+      <div class="table-container">
+        <table id="satellitesTable">
+          <thead>
+            <tr id="satellitesTableHeader">
+              <th>Satellite</th>
+              <!-- Dynamically populated node headers -->
+            </tr>
+          </thead>
+          <tbody id="satellitesTableBody">
+            <tr>
+              <td colspan="4" style="text-align: center; color: var(--text-muted); padding: 2rem;">
+                Awaiting satellite data...
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <!-- Node Management Modal -->
+  <div class="modal-backdrop" id="settingsModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 class="modal-title">Configure Monitored Nodes</h3>
+        <button class="copy-btn" id="closeModalBtn" style="font-size: 1.25rem;">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size: 0.825rem; color: var(--text-secondary);">
+          Add, rename, or update the IP addresses and ports for your Storj nodes. The dashboard queries these in parallel.
+        </p>
+
+        <div id="modalNodeRows" style="display: flex; flex-direction: column; gap: 0.75rem;">
+          <!-- Node inputs rendered here -->
+        </div>
+
+        <button id="addNodeRowBtn" class="btn" style="align-self: flex-start; margin-top: 0.5rem;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+          Add Node
+        </button>
+
+        <div style="border-top: 1px solid var(--border); padding-top: 1rem; margin-top: 0.5rem;">
+          <label style="display: block; font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 0.35rem;">
+            Default Server Poll Interval (Seconds)
+          </label>
+          <input type="number" id="cfgPollInterval" class="input-field" style="max-width: 150px;" min="5" max="3600" value="30">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button id="cancelModalBtn" class="btn">Cancel</button>
+        <button id="saveConfigBtn" class="btn btn-primary">Save Configuration</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Element -->
+  <div id="toast" class="toast">
+    <span id="toastMsg">Action completed</span>
+  </div>
+
+  <!-- Footer -->
+  <footer>
+    Storj Multi-Node Summary Dashboard &bull; Connected to <span id="footerNodeCount">3</span> storage nodes &bull; Built for local network monitoring
+  </footer>
+
+  <script>
+    // App State
+    let clusterData = null;
+    let pollTimer = null;
+    let countdownInterval = null;
+    let countdownRemaining = 30;
+    let pollIntervalSeconds = 30;
+
+    // Unit Conversion Formatter (Storj uses decimal TB / decimal GB)
+    function formatBytes(bytes, decimals = 2) {
+      if (!bytes || bytes === 0) return '0 B';
+      const k = 1000;
+      const dm = decimals < 0 ? 0 : decimals;
+      const sizes = ['B', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB'];
+      const i = Math.floor(Math.log(bytes) / Math.log(k));
+      return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+    }
+
+    function formatCurrency(val, decimals = 2) {
+      if (typeof val !== 'number' || isNaN(val)) return '$0.00';
+      if (val > 0 && val < 0.005) return '<$0.01';
+      return '$' + val.toLocaleString('en-US', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
+    }
+
+    function formatUptime(hours) {
+      if (!hours || hours <= 0) return 'Just started';
+      const days = Math.floor(hours / 24);
+      const remHours = Math.round(hours % 24);
+      if (days > 0) {
+        return `${days}d ${remHours}h`;
+      }
+      return `${remHours}h`;
+    }
+
+    function showToast(msg, duration = 3000) {
+      const toast = document.getElementById('toast');
+      const toastMsg = document.getElementById('toastMsg');
+      toastMsg.textContent = msg;
+      toast.classList.add('show');
+      setTimeout(() => {
+        toast.classList.remove('show');
+      }, duration);
+    }
+
+    function copyToClipboard(text, label = 'Node ID') {
+      navigator.clipboard.writeText(text).then(() => {
+        showToast(`Copied ${label} to clipboard!`);
+      }).catch(err => {
+        console.error('Clipboard copy failed:', err);
+      });
+    }
+
+    // Fetch Cluster Data
+    async function fetchData(force = false) {
+      const refreshIcon = document.getElementById('refreshIcon');
+      refreshIcon.classList.add('spinning');
+      
+      try {
+        const url = `/api/nodes${force ? '?force=true' : ''}`;
+        const resp = await fetch(url);
+        if (!resp.ok) throw new Error(`HTTP error ${resp.status}`);
+        const data = await resp.json();
+        clusterData = data;
+        renderDashboard(data);
+      } catch (err) {
+        console.error('Failed to fetch cluster data:', err);
+        const statusText = document.getElementById('clusterStatusText');
+        const statusDot = document.getElementById('clusterStatusDot');
+        statusText.textContent = 'Connection Error';
+        statusDot.className = 'status-dot danger';
+      } finally {
+        refreshIcon.classList.remove('spinning');
+        resetCountdown();
+      }
+    }
+
+    // Render Function
+    function renderDashboard(data) {
+      if (!data || !data.summary) return;
+
+      const summary = data.summary;
+      const nodes = data.nodes || [];
+      const satellites = data.satellites || [];
+
+      // 1. Header & Status
+      const statusDot = document.getElementById('clusterStatusDot');
+      const statusText = document.getElementById('clusterStatusText');
+      const clusterBadge = document.getElementById('clusterBadge');
+      const footerCount = document.getElementById('footerNodeCount');
+
+      clusterBadge.textContent = `${nodes.length} Nodes`;
+      footerCount.textContent = nodes.length;
+
+      if (summary.allHealthy) {
+        statusDot.className = 'status-dot healthy';
+        statusText.textContent = `All ${summary.onlineNodes} Nodes Healthy`;
+      } else if (summary.onlineNodes > 0) {
+        statusDot.className = 'status-dot warning';
+        statusText.textContent = `${summary.onlineNodes}/${summary.totalNodes} Nodes Online`;
+      } else {
+        statusDot.className = 'status-dot danger';
+        statusText.textContent = 'All Nodes Offline';
+      }
+
+      // Last updated time
+      const date = new Date(data.timestamp);
+      document.getElementById('lastUpdatedLabel').textContent = `Updated: ${date.toLocaleTimeString()}`;
+
+      // 2. Storage KPI
+      const disk = summary.disk || {};
+      document.getElementById('clusterUsedStorage').textContent = formatBytes(disk.totalUsed);
+      document.getElementById('clusterTotalStorage').textContent = '/ ' + formatBytes(disk.totalAllocated);
+      document.getElementById('clusterFreeStorage').textContent = formatBytes(disk.totalAvailable);
+      document.getElementById('clusterTrashStorage').textContent = formatBytes(disk.totalTrash);
+      
+      const pct = disk.percentUsed || 0;
+      document.getElementById('clusterStoragePercent').textContent = `${pct}%`;
+      const storageBar = document.getElementById('clusterStorageBar');
+      storageBar.style.width = `${Math.min(100, pct)}%`;
+      if (pct > 95) {
+        storageBar.className = 'progress-bar-fill fill-danger';
+      } else if (pct > 85) {
+        storageBar.className = 'progress-bar-fill fill-warning';
+      } else {
+        storageBar.className = 'progress-bar-fill fill-used';
+      }
+
+      // 3. Payout KPI
+      const payout = summary.payout || {};
+      document.getElementById('clusterCurrentPayout').textContent = formatCurrency(payout.currentPayout || payout.currentEarned);
+      document.getElementById('clusterExpectedPayout').textContent = formatCurrency(payout.currentExpected);
+      const earnedElem = document.getElementById('clusterCurrentEarned');
+      if (earnedElem) earnedElem.textContent = formatCurrency(payout.currentEarned);
+      document.getElementById('clusterCurrentHeld').textContent = formatCurrency(payout.currentHeld);
+      document.getElementById('clusterPrevPayout').textContent = formatCurrency(payout.previousPayout || payout.previousEarned);
+
+      // 4. Bandwidth KPI
+      const bw = summary.bandwidth || {};
+      document.getElementById('clusterBandwidth').textContent = formatBytes(bw.totalUsed);
+      const quicElem = document.getElementById('clusterQuicStatus');
+      if (summary.network && summary.network.allQuicOk) {
+        quicElem.textContent = 'OK';
+        quicElem.style.color = 'var(--accent-green)';
+      } else {
+        quicElem.textContent = 'Degraded';
+        quicElem.style.color = 'var(--accent-yellow)';
+      }
+
+      // 5. Health & Versions KPI
+      document.getElementById('clusterNodesOnline').textContent = `${summary.onlineNodes} / ${summary.totalNodes}`;
+      const versions = summary.network && summary.network.versions ? summary.network.versions.join(', ') : 'Unknown';
+      document.getElementById('clusterVersions').textContent = versions || 'N/A';
+
+      // 6. Render Node Cards
+      renderNodeCards(nodes);
+
+      // 7. Render Satellites Matrix
+      renderSatellitesTable(nodes, satellites);
+    }
+
+    function renderNodeCards(nodes) {
+      const container = document.getElementById('nodesContainer');
+      if (!nodes || nodes.length === 0) {
+        container.innerHTML = `<div style="grid-column: 1 / -1; text-align: center; padding: 2rem; color: var(--text-muted);">No nodes configured. Click "Nodes" to add one.</div>`;
+        return;
+      }
+
+      container.innerHTML = nodes.map(node => {
+        const isOnline = node.online;
+        const disk = node.diskSpace || {};
+        const payout = node.payout || { current: {}, previous: {} };
+        const curPayout = payout.current || {};
+        const prevPayout = payout.previous || {};
+        const bw = node.bandwidth || {};
+        const pct = disk.percentUsed || 0;
+        const uptime = formatUptime(node.uptimeHours);
+
+        // Progress bar styling based on saturation
+        let barClass = 'fill-used';
+        let barTextColor = 'var(--storj-blue)';
+        if (pct >= 95) {
+          barClass = 'fill-danger';
+          barTextColor = 'var(--accent-red)';
+        } else if (pct >= 85) {
+          barClass = 'fill-warning';
+          barTextColor = 'var(--accent-yellow)';
+        }
+
+        const nodeIdShort = node.nodeID ? `${node.nodeID.substring(0, 10)}...${node.nodeID.substring(node.nodeID.length - 6)}` : 'Unknown ID';
+
+        return `
+          <div class="node-card ${isOnline ? '' : 'offline'}">
+            <!-- Header -->
+            <div class="node-header">
+              <div class="node-header-top">
+                <div class="node-name">
+                  <div class="status-dot ${isOnline ? 'healthy' : 'danger'}"></div>
+                  <span>${escapeHtml(node.name)}</span>
+                </div>
+                <div class="node-actions">
+                  <a href="${node.dashboardUrl}" target="_blank" rel="noopener noreferrer" class="btn btn-primary" style="padding: 0.35rem 0.65rem; font-size: 0.75rem;">
+                    <span>Dashboard</span>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+                  </a>
+                </div>
+              </div>
+
+              <div class="node-subtext">
+                <span>${node.ip}:${node.port}</span>
+                ${node.nodeID ? `
+                  <span>&bull;</span>
+                  <span title="${node.nodeID}">${nodeIdShort}</span>
+                  <button class="copy-btn" onclick="copyToClipboard('${node.nodeID}', 'Node ID')" title="Copy Node ID">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"></path></svg>
+                  </button>
+                ` : ''}
+              </div>
+            </div>
+
+            <!-- Storage Progress -->
+            <div class="node-storage-section">
+              <div class="node-storage-labels">
+                <span>Storage (${pct}%)</span>
+                <span><strong>${formatBytes(disk.used)}</strong> / ${formatBytes(disk.allocated)}</span>
+              </div>
+              <div class="progress-bar-bg">
+                <div class="progress-bar-fill ${barClass}" style="width: ${Math.min(100, pct)}%;"></div>
+              </div>
+              <div style="display: flex; justify-content: space-between; font-size: 0.72rem; color: var(--text-muted);">
+                <span>Free: <strong style="color: var(--text-secondary);">${formatBytes(disk.available)}</strong></span>
+                <span>Trash: <strong style="color: var(--text-secondary);">${formatBytes(disk.trash)}</strong></span>
+                <span>Reclaimable: <strong style="color: var(--text-secondary);">${formatBytes(disk.reclaimable)}</strong></span>
+              </div>
+            </div>
+
+            <!-- Key Metrics Grid -->
+            <div class="node-metrics-grid">
+              <div class="node-metric-item">
+                <span class="node-metric-label">Payout (MTD)</span>
+                <span class="node-metric-value" style="color: var(--accent-green);">${formatCurrency(curPayout.payout)}</span>
+                <span class="node-metric-sub">Expected: ${formatCurrency(curPayout.expected)} &bull; Gross: ${formatCurrency(curPayout.earned)}</span>
+              </div>
+
+              <div class="node-metric-item">
+                <span class="node-metric-label">Prev Month</span>
+                <span class="node-metric-value">${formatCurrency(prevPayout.payout)}</span>
+                <span class="node-metric-sub">Held: ${formatCurrency(prevPayout.held)} &bull; Gross: ${formatCurrency(prevPayout.earned)}</span>
+              </div>
+
+              <div class="node-metric-item">
+                <span class="node-metric-label">Bandwidth</span>
+                <span class="node-metric-value">${formatBytes(bw.used)}</span>
+                <span class="node-metric-sub">Disk: ${formatCurrency(curPayout.diskSpacePayout || 0)} &bull; Held: ${formatCurrency(curPayout.held || 0)}</span>
+              </div>
+
+              <div class="node-metric-item">
+                <span class="node-metric-label">Uptime</span>
+                <span class="node-metric-value">${uptime}</span>
+                <span class="node-metric-sub">Version: ${node.version || 'Unknown'}</span>
+              </div>
+            </div>
+
+            <!-- Badges Row -->
+            <div class="node-badges-row">
+              <span class="pill-badge ${node.quicStatus === 'OK' ? 'green' : 'amber'}">
+                QUIC: ${node.quicStatus || 'Unknown'}
+              </span>
+              <span class="pill-badge ${isOnline ? 'green' : 'red'}">
+                ${isOnline ? 'Online' : 'Offline / Unreachable'}
+              </span>
+              ${node.upToDate ? '<span class="pill-badge green">Up to Date</span>' : '<span class="pill-badge amber">Update Available</span>'}
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function renderSatellitesTable(nodes, satellites) {
+      const thead = document.getElementById('satellitesTableHeader');
+      const tbody = document.getElementById('satellitesTableBody');
+
+      if (!nodes || nodes.length === 0 || !satellites || satellites.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: var(--text-muted); padding: 2rem;">No satellite data available.</td></tr>`;
+        return;
+      }
+
+      // Construct Header Columns: Satellite, [Node 1], [Node 2], ...
+      thead.innerHTML = `
+        <th>Satellite</th>
+        ${nodes.map(n => `<th>${escapeHtml(n.name)}</th>`).join('')}
+      `;
+
+      // Construct Body Rows
+      tbody.innerHTML = satellites.map(sat => {
+        const rowCells = nodes.map(n => {
+          const score = sat.scores_by_node ? sat.scores_by_node[n.name] : null;
+          if (!score) {
+            return `<td><span style="color: var(--text-muted);">--</span></td>`;
+          }
+
+          const auditClass = score.audit >= 99.5 ? 'score-perfect' : (score.audit >= 98.0 ? 'score-good' : 'score-bad');
+          const onlineClass = score.online >= 99.5 ? 'score-perfect' : (score.online >= 98.0 ? 'score-good' : 'score-bad');
+
+          return `
+            <td>
+              <div style="display: flex; gap: 0.35rem; align-items: center;">
+                <span class="score-badge ${auditClass}" title="Audit Score">
+                  Audit: ${score.audit}%
+                </span>
+                <span class="score-badge ${onlineClass}" title="Online Score">
+                  Online: ${score.online}%
+                </span>
+              </div>
+            </td>
+          `;
+        }).join('');
+
+        return `
+          <tr>
+            <td>
+              <span class="satellite-name">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--storj-blue)" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M12 2a14.5 14.5 0 000 20M2 12h20"></path></svg>
+                ${escapeHtml(sat.name)}
+              </span>
+            </td>
+            ${rowCells}
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    // Timer & Polling Logic
+    function resetCountdown() {
+      countdownRemaining = pollIntervalSeconds;
+      updateCountdownDisplay();
+    }
+
+    function updateCountdownDisplay() {
+      const cdElem = document.getElementById('countdownText');
+      if (pollIntervalSeconds === 0) {
+        cdElem.textContent = 'Paused';
+      } else {
+        cdElem.textContent = `${countdownRemaining}s`;
+      }
+    }
+
+    function setupPolling() {
+      if (pollTimer) clearInterval(pollTimer);
+      if (countdownInterval) clearInterval(countdownInterval);
+
+      if (pollIntervalSeconds <= 0) {
+        updateCountdownDisplay();
+        return;
+      }
+
+      countdownRemaining = pollIntervalSeconds;
+      updateCountdownDisplay();
+
+      countdownInterval = setInterval(() => {
+        countdownRemaining--;
+        if (countdownRemaining <= 0) {
+          countdownRemaining = pollIntervalSeconds;
+          fetchData(false);
+        }
+        updateCountdownDisplay();
+      }, 1000);
+    }
+
+    // Modal & Config Management
+    async function openSettingsModal() {
+      const modal = document.getElementById('settingsModal');
+      const container = document.getElementById('modalNodeRows');
+      container.innerHTML = '<div style="color: var(--text-muted);">Loading config...</div>';
+      modal.classList.add('active');
+
+      try {
+        const resp = await fetch('/api/config');
+        const cfg = await resp.json();
+        renderModalRows(cfg.nodes || []);
+        document.getElementById('cfgPollInterval').value = cfg.poll_interval_seconds || 30;
+      } catch (e) {
+        container.innerHTML = `<div style="color: var(--accent-red);">Failed to load config: ${e}</div>`;
+      }
+    }
+
+    function renderModalRows(nodes) {
+      const container = document.getElementById('modalNodeRows');
+      container.innerHTML = '';
+      nodes.forEach((n, idx) => {
+        addNodeRowToModal(n.name, n.ip, n.port);
+      });
+    }
+
+    function addNodeRowToModal(name = '', ip = '', port = 20909) {
+      const container = document.getElementById('modalNodeRows');
+      const row = document.createElement('div');
+      row.className = 'node-row-item';
+      row.innerHTML = `
+        <input type="text" class="input-field node-row-name" placeholder="Node Name" value="${escapeHtml(name)}">
+        <input type="text" class="input-field node-row-ip" placeholder="IP Address (e.g. 192.168.1.100)" value="${escapeHtml(ip)}">
+        <input type="number" class="input-field node-row-port" placeholder="Port" value="${port}">
+        <button type="button" class="btn" style="color: var(--accent-red); padding: 0.45rem;" onclick="this.parentElement.remove()" title="Remove node">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"></path></svg>
+        </button>
+      `;
+      container.appendChild(row);
+    }
+
+    async function saveSettings() {
+      const rows = document.querySelectorAll('.node-row-item');
+      const newNodes = [];
+      rows.forEach((r, idx) => {
+        const name = r.querySelector('.node-row-name').value.trim();
+        const ip = r.querySelector('.node-row-ip').value.trim();
+        const port = parseInt(r.querySelector('.node-row-port').value.trim(), 10) || 20909;
+        if (ip) {
+          newNodes.push({
+            id: `node-${idx + 1}`,
+            name: name || `Node ${idx + 1}`,
+            ip: ip,
+            port: port
+          });
+        }
+      });
+
+      const pollSeconds = parseInt(document.getElementById('cfgPollInterval').value, 10) || 30;
+
+      try {
+        const resp = await fetch('/api/config', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            nodes: newNodes,
+            poll_interval_seconds: pollSeconds
+          })
+        });
+
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+        document.getElementById('settingsModal').classList.remove('active');
+        showToast('Configuration updated successfully!');
+        fetchData(true);
+      } catch (err) {
+        alert('Failed to save config: ' + err.message);
+      }
+    }
+
+    // Event Listeners
+    document.getElementById('refreshBtn').addEventListener('click', () => fetchData(true));
+
+    document.getElementById('pollIntervalSelect').addEventListener('change', (e) => {
+      pollIntervalSeconds = parseInt(e.target.value, 10);
+      setupPolling();
+    });
+
+    document.getElementById('settingsBtn').addEventListener('click', openSettingsModal);
+    document.getElementById('closeModalBtn').addEventListener('click', () => {
+      document.getElementById('settingsModal').classList.remove('active');
+    });
+    document.getElementById('cancelModalBtn').addEventListener('click', () => {
+      document.getElementById('settingsModal').classList.remove('active');
+    });
+    document.getElementById('addNodeRowBtn').addEventListener('click', () => {
+      addNodeRowToModal('', '', 20909);
+    });
+    document.getElementById('saveConfigBtn').addEventListener('click', saveSettings);
+
+    // Initial Load
+    fetchData(true);
+    setupPolling();
+  </script>
+</body>
+</html>

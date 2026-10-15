@@ -1,0 +1,16 @@
+[Unit]
+Description=Storj Multi-Node Summary Dashboard
+After=network.target
+
+[Service]
+Type=simple
+User=storj
+WorkingDirectory=/opt/storj_multi_dashboard
+ExecStart=/usr/bin/python3 /opt/storj_multi_dashboard/server.py
+Restart=always
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

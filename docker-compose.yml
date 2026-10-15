@@ -1,0 +1,23 @@
+# TrueNAS SCALE / Docker Compose configuration for Storj Multi-Node Dashboard
+services:
+  storj-dashboard:
+    image: ghcr.io/nullgel/storj_multi_dashboard:latest
+    container_name: storj-multi-dashboard
+    restart: unless-stopped
+    ports:
+      - "8888:8888"
+    environment:
+      - PORT=8888
+      - CONFIG_PATH=/config/config.json
+    volumes:
+      # Change /mnt/tank/appdata to your TrueNAS ZFS dataset path
+      - /mnt/tank/appdata/storj-dashboard:/config
+
+# TrueNAS SCALE Portal Integration (Generates the "Web UI" button on the TrueNAS App card)
+x-portals:
+  - name: "Web UI"
+    scheme: "http"
+    host: "0.0.0.0"
+    port: 8888
+    path: "/"
+x-notes: "Storj Multi-Node Summary Dashboard: Unifies statistics across multiple LAN Storj storage nodes."

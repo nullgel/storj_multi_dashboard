@@ -1,0 +1,12 @@
+__pycache__/
+*.py[cod]
+*$py.class
+*.log
+*.pid
+.git/
+.github/
+.gitignore
+storj-dashboard.service
+start.sh
+stop.sh
+status.sh

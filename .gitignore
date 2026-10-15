@@ -1,0 +1,18 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Environment & runtime logs
+*.log
+*.pid
+
+# Local config overrides (leave sample or committed config if desired)
+# config.json is kept as template, but ignored if you prefer config.json.example:
+# config.local.json
+
+# IDE & OS
+.vscode/
+.idea/
+.DS_Store
