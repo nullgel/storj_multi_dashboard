@@ -2,6 +2,8 @@
 
 A lightweight, zero-dependency Python dashboard and Docker container that unifies and displays live statistics across multiple Storj storage nodes on your local network.
 
+<img width="1028" height="914" alt="Screenshot From 2026-10-16 08-23-53" src="https://github.com/user-attachments/assets/803021a7-f5ff-46e2-b521-5d4c0bfd1e07" />
+
 ---
 
 ## Features
